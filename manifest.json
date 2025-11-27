@@ -1,0 +1,10 @@
+{
+  "id": "sacred-timeline",
+  "name": "Sacred Timeline",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Git for humans - version control for your vault with human-friendly language",
+  "author": "Suhit Anantula",
+  "authorUrl": "https://github.com/suhitanantula",
+  "isDesktopOnly": true
+}
