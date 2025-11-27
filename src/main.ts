@@ -7,12 +7,16 @@ interface SacredTimelineSettings {
     autoBackup: boolean;
     autoBackupInterval: number; // minutes
     showStatusBar: boolean;
+    githubToken: string;
+    githubUsername: string;
 }
 
 const DEFAULT_SETTINGS: SacredTimelineSettings = {
     autoBackup: false,
     autoBackupInterval: 30,
-    showStatusBar: true
+    showStatusBar: true,
+    githubToken: '',
+    githubUsername: ''
 };
 
 export default class SacredTimelinePlugin extends Plugin {
@@ -86,6 +90,18 @@ export default class SacredTimelinePlugin extends Plugin {
             id: 'status',
             name: 'Status: Show current state',
             callback: () => this.statusCommand()
+        });
+
+        this.addCommand({
+            id: 'connect',
+            name: 'Connect: Link to GitHub',
+            callback: () => this.connectCommand()
+        });
+
+        this.addCommand({
+            id: 'start',
+            name: 'Start: Begin fresh timeline',
+            callback: () => this.startCommand()
         });
 
         // Status bar
@@ -279,6 +295,58 @@ export default class SacredTimelinePlugin extends Plugin {
         }
 
         new Notice(message, 5000);
+    }
+
+    async connectCommand() {
+        // Check if already connected
+        const isRepo = await this.sacred.isRepository();
+
+        if (!isRepo) {
+            new Notice('No timeline yet. Run "Start" first to initialize.');
+            return;
+        }
+
+        // Open the connect modal
+        new ConnectModal(this.app, this, async (repoUrl, token, username) => {
+            // Save credentials
+            this.settings.githubToken = token;
+            this.settings.githubUsername = username;
+            await this.saveSettings();
+
+            // Configure git credentials
+            await this.sacred.configureCredentials(username, token);
+
+            // Add remote
+            const result = await this.sacred.connect(repoUrl);
+            new Notice(result.message);
+
+            this.updateStatusBar();
+            this.refreshView();
+        }).open();
+    }
+
+    async startCommand() {
+        const isRepo = await this.sacred.isRepository();
+
+        if (isRepo) {
+            new Notice('Sacred Timeline already exists in this vault.');
+            return;
+        }
+
+        const result = await this.sacred.start();
+        new Notice(result.message);
+
+        if (result.success) {
+            // Prompt to connect
+            new Notice('Now use "Connect" to link to GitHub.', 5000);
+        }
+
+        this.updateStatusBar();
+        this.refreshView();
+    }
+
+    isConnected(): boolean {
+        return !!(this.settings.githubToken && this.settings.githubUsername);
     }
 
     refreshView() {
@@ -722,6 +790,154 @@ class NarrateModal extends Modal {
                 list.createEl('li', { text: `${f.file} (${f.changes} changes)` });
             });
         }
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+class ConnectModal extends Modal {
+    plugin: SacredTimelinePlugin;
+    repoUrl: string = '';
+    token: string = '';
+    username: string = '';
+    onSubmit: (repoUrl: string, token: string, username: string) => void;
+
+    constructor(app: App, plugin: SacredTimelinePlugin, onSubmit: (repoUrl: string, token: string, username: string) => void) {
+        super(app);
+        this.plugin = plugin;
+        this.onSubmit = onSubmit;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+
+        contentEl.createEl('h2', { text: '🔗 Connect to GitHub' });
+
+        // Step 1: Create repo instruction
+        const step1 = contentEl.createDiv({ cls: 'sacred-timeline-connect-step' });
+        step1.createEl('h3', { text: 'Step 1: Create a GitHub repository' });
+        step1.createEl('p', { text: 'Go to GitHub and create a new repository for your vault.' });
+        const githubBtn = step1.createEl('button', { text: 'Open GitHub →' });
+        githubBtn.onclick = () => window.open('https://github.com/new', '_blank');
+
+        // Step 2: Get token
+        const step2 = contentEl.createDiv({ cls: 'sacred-timeline-connect-step' });
+        step2.createEl('h3', { text: 'Step 2: Create a Personal Access Token' });
+        step2.createEl('p', { text: 'You need a token to let Sacred Timeline access your repository.' });
+        const tokenBtn = step2.createEl('button', { text: 'Create Token →' });
+        tokenBtn.onclick = () => window.open('https://github.com/settings/tokens/new?description=Sacred%20Timeline&scopes=repo', '_blank');
+
+        const tokenHint = step2.createEl('p', { cls: 'sacred-timeline-hint' });
+        tokenHint.innerHTML = '✓ Check the <strong>repo</strong> scope<br>✓ Set expiration (90 days recommended)<br>✓ Copy the token - you won\'t see it again!';
+
+        // Step 3: Enter details
+        const step3 = contentEl.createDiv({ cls: 'sacred-timeline-connect-step' });
+        step3.createEl('h3', { text: 'Step 3: Enter your details' });
+
+        // Username input
+        const usernameContainer = step3.createDiv({ cls: 'sacred-timeline-input-group' });
+        usernameContainer.createEl('label', { text: 'GitHub Username' });
+        const usernameInput = new TextComponent(usernameContainer);
+        usernameInput.setPlaceholder('your-username');
+        usernameInput.inputEl.style.width = '100%';
+        usernameInput.onChange((value) => this.username = value);
+
+        // Token input
+        const tokenContainer = step3.createDiv({ cls: 'sacred-timeline-input-group' });
+        tokenContainer.createEl('label', { text: 'Personal Access Token' });
+        const tokenInput = new TextComponent(tokenContainer);
+        tokenInput.setPlaceholder('ghp_xxxxxxxxxxxx');
+        tokenInput.inputEl.style.width = '100%';
+        tokenInput.inputEl.type = 'password';
+        tokenInput.onChange((value) => this.token = value);
+
+        // Repo URL input
+        const repoContainer = step3.createDiv({ cls: 'sacred-timeline-input-group' });
+        repoContainer.createEl('label', { text: 'Repository URL' });
+        const repoInput = new TextComponent(repoContainer);
+        repoInput.setPlaceholder('https://github.com/username/my-vault.git');
+        repoInput.inputEl.style.width = '100%';
+        repoInput.onChange((value) => this.repoUrl = value);
+
+        // Auto-fill repo URL when username changes
+        usernameInput.onChange((value) => {
+            this.username = value;
+            if (value && !this.repoUrl) {
+                repoInput.setPlaceholder(`https://github.com/${value}/my-vault.git`);
+            }
+        });
+
+        // Buttons
+        const btnContainer = contentEl.createDiv({ cls: 'sacred-timeline-modal-buttons' });
+
+        const submitBtn = btnContainer.createEl('button', { text: 'Connect', cls: 'mod-cta' });
+        submitBtn.onclick = () => {
+            if (!this.username.trim()) {
+                new Notice('Please enter your GitHub username');
+                return;
+            }
+            if (!this.token.trim()) {
+                new Notice('Please enter your Personal Access Token');
+                return;
+            }
+            if (!this.repoUrl.trim()) {
+                new Notice('Please enter your repository URL');
+                return;
+            }
+            this.close();
+            this.onSubmit(this.repoUrl, this.token, this.username);
+        };
+
+        const cancelBtn = btnContainer.createEl('button', { text: 'Cancel' });
+        cancelBtn.onclick = () => this.close();
+
+        // Add styles for this modal
+        const style = document.createElement('style');
+        style.textContent = `
+            .sacred-timeline-connect-step {
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--background-modifier-border);
+            }
+            .sacred-timeline-connect-step h3 {
+                margin: 0 0 8px 0;
+                font-size: 14px;
+            }
+            .sacred-timeline-connect-step p {
+                margin: 4px 0;
+                font-size: 13px;
+                color: var(--text-muted);
+            }
+            .sacred-timeline-connect-step button {
+                margin-top: 8px;
+            }
+            .sacred-timeline-hint {
+                background: var(--background-secondary);
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                margin-top: 8px;
+            }
+            .sacred-timeline-input-group {
+                margin-bottom: 12px;
+            }
+            .sacred-timeline-input-group label {
+                display: block;
+                font-size: 12px;
+                margin-bottom: 4px;
+                color: var(--text-muted);
+            }
+            .sacred-timeline-modal-buttons {
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                margin-top: 16px;
+            }
+        `;
+        contentEl.appendChild(style);
     }
 
     onClose() {
