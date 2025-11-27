@@ -7,7 +7,8 @@ interface SacredTimelineSettings {
     autoBackup: boolean;
     autoBackupInterval: number; // minutes
     showStatusBar: boolean;
-    githubToken: string;
+    // Note: We intentionally do NOT store GitHub tokens in settings
+    // Tokens are embedded in the git remote URL and managed by git
     githubUsername: string;
 }
 
@@ -15,7 +16,6 @@ const DEFAULT_SETTINGS: SacredTimelineSettings = {
     autoBackup: false,
     autoBackupInterval: 30,
     showStatusBar: true,
-    githubToken: '',
     githubUsername: ''
 };
 
@@ -308,12 +308,12 @@ export default class SacredTimelinePlugin extends Plugin {
 
         // Open the connect modal
         new ConnectModal(this.app, this, async (repoUrl, token, username) => {
-            // Save credentials
-            this.settings.githubToken = token;
+            // Save username only (NOT the token - security best practice)
             this.settings.githubUsername = username;
             await this.saveSettings();
 
-            // Configure git credentials
+            // Configure git credentials (embeds token in git remote URL)
+            // The token is stored in .git/config, not in plugin settings
             await this.sacred.configureCredentials(username, token);
 
             // Add remote
@@ -346,7 +346,8 @@ export default class SacredTimelinePlugin extends Plugin {
     }
 
     isConnected(): boolean {
-        return !!(this.settings.githubToken && this.settings.githubUsername);
+        // Check if we have a username configured (token is in git config, not settings)
+        return !!this.settings.githubUsername;
     }
 
     refreshView() {
@@ -833,6 +834,9 @@ class ConnectModal extends Modal {
         const tokenHint = step2.createEl('p', { cls: 'sacred-timeline-hint' });
         tokenHint.innerHTML = '✓ Check the <strong>repo</strong> scope<br>✓ Set expiration (90 days recommended)<br>✓ Copy the token - you won\'t see it again!';
 
+        const securityNote = step2.createEl('p', { cls: 'sacred-timeline-security-note' });
+        securityNote.innerHTML = '🔒 <strong>Security:</strong> Your token will be stored in your vault\'s .git/config file (not synced to cloud). Keep this file private.';
+
         // Step 3: Enter details
         const step3 = contentEl.createDiv({ cls: 'sacred-timeline-connect-step' });
         step3.createEl('h3', { text: 'Step 3: Enter your details' });
@@ -920,6 +924,14 @@ class ConnectModal extends Modal {
                 border-radius: 4px;
                 font-size: 12px;
                 margin-top: 8px;
+            }
+            .sacred-timeline-security-note {
+                background: var(--background-modifier-border);
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 11px;
+                margin-top: 8px;
+                border-left: 3px solid var(--text-accent);
             }
             .sacred-timeline-input-group {
                 margin-bottom: 12px;
