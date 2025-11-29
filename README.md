@@ -1,27 +1,54 @@
 # Sacred Timeline for Obsidian
 
-**Git for humans** - Version control for your vault with human-friendly language.
+**Git for humans: Innovation architecture for the AI age**
 
-## What is this?
+> *"Your world may seem singular to you, but really, it's a teeny, tiny, weenie speck on a vast cosmic canvas. In reality, the only universe considered the true universe exists on the Sacred Timeline, and it is guarded zealously by all of us here at the TVA."*
+>
+> —Mr. Paradox to Deadpool
 
-Sacred Timeline brings git version control to Obsidian using language that makes sense to non-coders:
+---
 
-| What you mean | Sacred Timeline |
-|---------------|-----------------|
-| Save this moment | **Capture** |
-| Get latest from cloud | **Update** |
-| Send to cloud | **Backup** |
-| What did I change? | **Changes** |
-| Show me history | **Timeline** |
-| Summarize my progress | **Narrate** |
-| Try something risky | **Experiment** |
-| Keep the experiment | **Keep** |
-| Abandon experiment | **Discard** |
+## The Idea
+
+In Marvel's Loki, the **Sacred Timeline** is the main reality—protected and preserved. **Branch timelines** are alternate realities where you can explore different choices safely. The **TVA** manages it all.
+
+Git works the same way. Your main branch is your Sacred Timeline. Feature branches are alternate realities for experimentation. Git is your TVA.
+
+**Sacred Timeline brings this power to your Obsidian vault.**
+
+| Marvel Concept | Git Concept | What It Means |
+|----------------|-------------|---------------|
+| Sacred Timeline | main branch | Your working, proven vault |
+| Branch Timeline | feature branch | Safe space to experiment |
+| TVA | Git system | Manages all your timelines |
+| Nexus Event | commit | A captured decision point |
+| Timeline Merge | git merge | Bring successful experiments back |
+| Pruning | branch delete | Remove failed experiments |
+
+**The superpower:** Try bold ideas without fear. If the experiment fails, your Sacred Timeline is untouched. If it succeeds, merge it in.
+
+---
+
+## The Language
+
+| What you mean | Sacred Timeline | What Git calls it |
+|---------------|-----------------|-------------------|
+| Save this moment | `capture` | git commit |
+| Summarize my progress | `narrate` | git log (analyzed) |
+| Get latest from cloud | `latest` | git pull |
+| Send to cloud | `backup` | git push |
+| What did I change? | `changes` | git diff/status |
+| Show me history | `timeline` | git log |
+| Try something risky | `experiment` | git branch |
+| Keep the experiment | `keep` | git merge |
+| Abandon experiment | `discard` | git branch -d |
+
+---
 
 ## Features
 
 ### Sidebar View
-- One-click Capture, Update, Backup
+- One-click Capture, Latest, Backup
 - See your changes at a glance
 - Browse recent timeline
 - Start experiments safely
@@ -29,7 +56,7 @@ Sacred Timeline brings git version control to Obsidian using language that makes
 ### Commands
 All features available via Command Palette (Cmd/Ctrl+P):
 - "Sacred Timeline: Capture"
-- "Sacred Timeline: Update"
+- "Sacred Timeline: Latest"
 - "Sacred Timeline: Backup"
 - "Sacred Timeline: Narrate"
 - etc.
@@ -43,6 +70,8 @@ Shows current state at a glance:
 ### Auto Backup
 Optionally enable automatic capture and backup every X minutes.
 
+---
+
 ## Installation
 
 ### From Obsidian Community Plugins (coming soon)
@@ -55,10 +84,14 @@ Optionally enable automatic capture and backup every X minutes.
 2. Extract to your vault's `.obsidian/plugins/sacred-timeline/` folder
 3. Enable in Settings → Community plugins
 
+---
+
 ## Requirements
 
 - Your vault must be a git repository
 - Git must be installed on your system
+
+---
 
 ## Quick Start
 
@@ -68,25 +101,29 @@ Optionally enable automatic capture and backup every X minutes.
 4. Click "Backup" to send to GitHub/cloud
 5. Use "Narrate" to see a summary of your recent work
 
+---
+
 ## Philosophy
 
 Git is **innovation architecture**, not just version control:
 
 - **Capture** = "I tried something and here's what I learned"
+- **Backup** = "Sharing my learning into the collective universe"
+- **Latest** = "Bringing the latest collective thinking into my work"
 - **Experiment** = "Starting a safe space to try something risky"
-- **Backup** = "Sharing my learning with the cloud"
-- **Timeline** = "The sacred history of my work"
+- **Keep** = "This experiment succeeded, make it the new normal"
 
-The Marvel analogy: Your main branch is the Sacred Timeline. Experiments are variant timelines. You can explore variants without breaking the sacred timeline, and merge the successful ones back.
+---
 
 ## Related
 
-- [Sacred Timeline VS Code Extension](https://github.com/suhitanantula/sacred-timeline)
-- [Sacred Timeline CLI](https://github.com/suhitanantula/sacred-timeline)
+- [Sacred Timeline CLI + VS Code](https://github.com/suhitanantula/sacred-timeline) - Terminal and VS Code version
+
+---
 
 ## Credits
 
-Built by [Suhit Anantula](https://github.com/suhitanantula)
+Built by [Suhit Anantula](https://suhitanantula.com) as part of the Co-Intelligent Organisation project.
 
 ## License
 
